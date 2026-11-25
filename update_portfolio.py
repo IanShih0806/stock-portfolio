@@ -190,6 +190,21 @@ for d in sorted_days:
         'p56': p56,   's56': s56,   'val56': val56,   'chg56': chg56,   'pct56': pct56,
     })
 
+# Check if live Excel sheet has current today's live profit and stock value (Row 3, col 11 and Row 1, col 2 & 3)
+try:
+    live_today_chg = float(df.iloc[3, 11])
+    live_stock_val = float(df.iloc[1, 2])
+    live_profit = float(df.iloc[1, 3])
+    if daily_data and not pd.isna(live_today_chg):
+        daily_data[-1]['daily_change'] = round(live_today_chg, 0)
+        daily_data[-1]['stock_val'] = round(live_stock_val, 0)
+        daily_data[-1]['profit'] = round(live_profit, 0)
+        daily_data[-1]['profit_pct'] = round((live_profit / cost) * 100, 2)
+        if len(daily_data) >= 2 and daily_data[-2]['stock_val'] > 0:
+            daily_data[-1]['daily_change_pct'] = round((live_today_chg / daily_data[-2]['stock_val']) * 100, 2)
+except Exception as e:
+    print("Notice: live row read:", e)
+
 # Compute historical rankings for all days
 gain_days = sorted([r for r in daily_data if r['daily_change'] > 0], key=lambda x: x['daily_change'], reverse=True)
 loss_days = sorted([r for r in daily_data if r['daily_change'] < 0], key=lambda x: x['daily_change'])

@@ -6,6 +6,13 @@ with open('/Users/10404604/.gemini/antigravity/scratch/stock-portfolio-tracker/p
 
 json_str = json.dumps(data)
 
+summary = data.get('summary', {})
+latest_r = data.get('daily_data', [])[-1] if data.get('daily_data') else {}
+latest_rank_text = latest_r.get('rank_text', '排名中')
+latest_rank_type = latest_r.get('rank_type', 'even')
+latest_rank_cls = 'rank-gain' if latest_rank_type == 'gain' else ('rank-loss' if latest_rank_type == 'loss' else '')
+latest_rank_icon = '🏆' if latest_rank_type == 'gain' else ('⚠️' if latest_rank_type == 'loss' else '')
+
 html_content = f'''<!DOCTYPE html>
 <html lang="zh-TW">
 <head>
@@ -396,7 +403,7 @@ html_content = f'''<!DOCTYPE html>
       <div class="kpi-card c-today" onclick="setMode('daily_change')">
         <div class="kpi-label">
           <span>今日獲利 (單日損益)</span>
-          <span class="rank-badge rank-gain" id="today-rank-badge">🏆 獲利第 1 名</span>
+          <span class="rank-badge {latest_rank_cls}" id="today-rank-badge">{latest_rank_icon} {latest_rank_text}</span>
         </div>
         <div class="kpi-value highlight-gain" id="kpi-today-profit">+NT$ 1,997,171</div>
         <div class="kpi-sub" id="kpi-today-sub">
@@ -1272,13 +1279,53 @@ html_content = f'''<!DOCTYPE html>
           updateEtfCard('929', p929, s929, val929, chg929);
           updateEtfCard('878', p878, s878, val878, chg878);
 
+          // Helper for computing rank dynamically based on allRecords
+          function getLiveRank(val, record) {{
+            if (val > 0) {{
+              let count = 0;
+              for (let i = 0; i < allRecords.length; i++) {{
+                if (allRecords[i] !== record && allRecords[i].daily_change > val) count++;
+              }}
+              const rk = count + 1;
+              return {{ type: 'gain', num: rk, text: `獲利第 ${{rk}} 名` }};
+            }} else if (val < 0) {{
+              let count = 0;
+              for (let i = 0; i < allRecords.length; i++) {{
+                if (allRecords[i] !== record && allRecords[i].daily_change < val) count++;
+              }}
+              const rk = count + 1;
+              return {{ type: 'loss', num: rk, text: `虧損第 ${{rk}} 名` }};
+            }}
+            return {{ type: 'even', num: 0, text: '持平' }};
+          }}
+
           // Update latest record in array and redraw chart
           const lastR = allRecords[allRecords.length - 1];
           if (lastR) {{
             lastR.stock_val = liveStockVal;
             lastR.profit = liveProfit;
             lastR.profit_pct = parseFloat(liveProfitPct.toFixed(2));
-            if (liveTodayProfit !== undefined) lastR.daily_change = liveTodayProfit;
+            if (liveTodayProfit !== undefined) {{
+              lastR.daily_change = liveTodayProfit;
+              const rkInfo = getLiveRank(liveTodayProfit, lastR);
+              lastR.rank_type = rkInfo.type;
+              lastR.rank_num = rkInfo.num;
+              lastR.rank_text = rkInfo.text;
+
+              const rankBadgeEl = document.getElementById('today-rank-badge');
+              if (rankBadgeEl) {{
+                if (rkInfo.type === 'gain') {{
+                  rankBadgeEl.className = 'rank-badge rank-gain';
+                  rankBadgeEl.innerText = `🏆 ${{rkInfo.text}}`;
+                }} else if (rkInfo.type === 'loss') {{
+                  rankBadgeEl.className = 'rank-badge rank-loss';
+                  rankBadgeEl.innerText = `⚠️ ${{rkInfo.text}}`;
+                }} else {{
+                  rankBadgeEl.className = 'rank-badge';
+                  rankBadgeEl.innerText = '-';
+                }}
+              }}
+            }}
             if (liveNetAsset) lastR.net_asset = liveNetAsset;
             drawChart();
             applySortAndRender();
