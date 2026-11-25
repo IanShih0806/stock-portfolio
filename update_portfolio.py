@@ -19,13 +19,13 @@ with urllib.request.urlopen(req) as resp:
 print("已下載最新 Excel，正在解析月度持股張數與股息...")
 df = pd.read_excel(xlsx_path, sheet_name='存股記錄表', header=None)
 
-monthly_records = {}
+monthly_records = []
 for i in range(13, 40):
     row = df.iloc[i]
     dt_val = row[0]
     if pd.isna(dt_val): continue
     ym = str(dt_val)[:7]
-    monthly_records[ym] = {
+    monthly_records.append({
         'ym': ym,
         '00929_shares': float(row[2]) if pd.notna(row[2]) else 0.0,
         '00919_shares': float(row[4]) if pd.notna(row[4]) else 0.0,
@@ -36,7 +36,9 @@ for i in range(13, 40):
         '00878_div': float(row[7]) if pd.notna(row[7]) else 0.0,
         '0056_div': float(row[9]) if pd.notna(row[9]) else 0.0,
         'total_div': float(row[1]) if pd.notna(row[1]) else 0.0,
-    }
+    })
+
+monthly_dict = {m['ym']: m for m in monthly_records}
 
 print("正在從 Yahoo Finance 抓取四大 ETF 歷史股價...")
 start_ts = int(datetime.datetime(2024, 8, 25).timestamp())
@@ -85,23 +87,31 @@ for d in sorted_days:
             last_known[code] = raw_prices[code][d]
         prices[code][d] = last_known[code]
 
-sorted_yms = sorted(monthly_records.keys())
+sorted_yms = sorted(monthly_dict.keys())
 ym_cum_div = {}
 running_div = 0.0
 for ym in sorted_yms:
-    running_div += monthly_records[ym]['total_div']
+    running_div += monthly_dict[ym]['total_div']
     ym_cum_div[ym] = running_div
 
-daily_data = []
-prev_stock_val = None
+cost = 14066887.0
 loan_start_date = '2026-01-09'
 const_remaining_capital = 1696801.0
 const_paid_mortgage = 5350000.0
 const_pledge_loan = 7200000.0
 
+daily_data = []
+prev_stock_val = None
+prev_prices = {}
+
+c929 = 19.432
+c919 = 24.26
+c878 = 22.41776786
+c56  = 37.33598214
+
 for d in sorted_days:
     ym = d[:7]
-    m_info = monthly_records.get(ym, monthly_records[sorted_yms[-1]])
+    m_info = monthly_dict.get(ym, monthly_dict[sorted_yms[-1]])
     
     p929 = prices['00929'][d]
     p919 = prices['00919'][d]
@@ -128,44 +138,109 @@ for d in sorted_days:
         daily_change_pct = round((daily_change / prev_stock_val) * 100, 2)
     prev_stock_val = stock_val
     
+    # Calculate ETF daily changes
+    def calc_etf_chg(curr, prev):
+        if prev is None or prev == 0: return 0.0, 0.0
+        diff = round(curr - prev, 2)
+        pct = round((diff / prev) * 100, 2)
+        return diff, pct
+
+    chg929, pct929 = calc_etf_chg(p929, prev_prices.get('00929'))
+    chg919, pct919 = calc_etf_chg(p919, prev_prices.get('00919'))
+    chg878, pct878 = calc_etf_chg(p878, prev_prices.get('00878'))
+    chg56,  pct56  = calc_etf_chg(p56,  prev_prices.get('0056'))
+
+    prev_prices['00929'] = p929
+    prev_prices['00919'] = p919
+    prev_prices['00878'] = p878
+    prev_prices['0056']  = p56
+
     cum_div_val = ym_cum_div.get(ym, running_div)
     stock_val_with_div = stock_val + cum_div_val
     
     loan_val = const_pledge_loan if d >= loan_start_date else 0.0
     net_asset = stock_val + const_remaining_capital + const_paid_mortgage - loan_val
     
+    fee929 = (p929 * 0.001 * 1000 + p929 * 0.001425 * 1000 + c929 * 0.001425 * 1000) if s929 > 0 else 0
+    fee919 = (p919 * 0.001 * 1000 + p919 * 0.001425 * 1000 + c919 * 0.001425 * 1000) if s919 > 0 else 0
+    fee878 = (p878 * 0.001 * 1000 + p878 * 0.001425 * 1000 + c878 * 0.001425 * 1000) if s878 > 0 else 0
+    fee56  = (p56  * 0.001 * 1000 + p56  * 0.001425 * 1000 + c56  * 0.001425 * 1000) if s56 > 0 else 0
+    total_fee = fee929 + fee919 + fee878 + fee56
+    
+    profit = round((stock_val - cost) - total_fee, 0)
+    profit_pct = round((profit / cost) * 100, 2)
+    profit_with_div = round(profit + cum_div_val, 0)
+    profit_with_div_pct = round((profit_with_div / cost) * 100, 2)
+
     daily_data.append({
         'date': d,
         'stock_val': stock_val,
         'daily_change': daily_change,
         'daily_change_pct': daily_change_pct,
+        'profit': profit,
+        'profit_pct': profit_pct,
+        'profit_with_div': profit_with_div,
+        'profit_with_div_pct': profit_with_div_pct,
         'cum_div': cum_div_val,
         'stock_val_with_div': stock_val_with_div,
         'net_asset': net_asset,
-        'p929': p929, 's929': s929, 'val929': val929,
-        'p919': p919, 's919': s919, 'val919': val919,
-        'p878': p878, 's878': s878, 'val878': val878,
-        'p56': p56, 's56': s56, 'val56': val56
+        'p929': p929, 's929': s929, 'val929': val929, 'chg929': chg929, 'pct929': pct929,
+        'p919': p919, 's919': s919, 'val919': val919, 'chg919': chg919, 'pct919': pct919,
+        'p878': p878, 's878': s878, 'val878': val878, 'chg878': chg878, 'pct878': pct878,
+        'p56': p56,   's56': s56,   'val56': val56,   'chg56': chg56,   'pct56': pct56,
     })
+
+# Compute historical rankings for all days
+gain_days = sorted([r for r in daily_data if r['daily_change'] > 0], key=lambda x: x['daily_change'], reverse=True)
+loss_days = sorted([r for r in daily_data if r['daily_change'] < 0], key=lambda x: x['daily_change'])
+
+gain_ranks = {r['date']: idx + 1 for idx, r in enumerate(gain_days)}
+loss_ranks = {r['date']: idx + 1 for idx, r in enumerate(loss_days)}
+
+for r in daily_data:
+    d = r['date']
+    if r['daily_change'] > 0:
+        rank = gain_ranks[d]
+        r['rank_type'] = 'gain'
+        r['rank_num'] = rank
+        r['rank_text'] = f"獲利第 {rank} 名"
+    elif r['daily_change'] < 0:
+        rank = loss_ranks[d]
+        r['rank_type'] = 'loss'
+        r['rank_num'] = rank
+        r['rank_text'] = f"虧損第 {rank} 名"
+    else:
+        r['rank_type'] = 'even'
+        r['rank_num'] = 0
+        r['rank_text'] = "持平"
+
+# Calculate latest 3 months dividend average
+sorted_m_desc = sorted(monthly_records, key=lambda x: x['ym'], reverse=True)
+last_3 = sorted_m_desc[:3]
+avg_3m_div = round(sum(m['total_div'] for m in last_3) / len(last_3), 0) if last_3 else 0
 
 out_json = os.path.join(base_dir, 'portfolio_data.json')
 with open(out_json, 'w', encoding='utf-8') as f:
     json.dump({
         'daily_data': daily_data,
-        'monthly_records': list(monthly_records.values()),
+        'monthly_records': monthly_records,
         'summary': {
-            'cost': 14066887.0,
+            'cost': cost,
             'capital': 17300000.0,
             'remaining_capital': const_remaining_capital,
             'paid_mortgage': const_paid_mortgage,
             'pledge_loan': const_pledge_loan,
             'loan_start_date': loan_start_date,
             'dividend_up_to_now': cum_div_val,
+            'avg_3m_div': avg_3m_div,
+            'last_3_months': [m['ym'] for m in last_3],
             'latest_date': daily_data[-1]['date'],
-            'latest_stock_val': daily_data[-1]['stock_val']
+            'latest_stock_val': daily_data[-1]['stock_val'],
+            'latest_profit': daily_data[-1]['profit'],
+            'latest_profit_pct': daily_data[-1]['profit_pct'],
+            'latest_rank_text': daily_data[-1]['rank_text'],
+            'latest_rank_type': daily_data[-1]['rank_type']
         }
     }, f, ensure_ascii=False, indent=2)
 
-# Re-run build_html.py
-os.system(f'python3 "{os.path.join(base_dir, "build_html.py")}"')
-print("=== 更新完成！已更新 portfolio_data.json 與 index.html ===")
+print(f"=== 更新完成！已更新 portfolio_data.json，近3個月平均配息: NT$ {avg_3m_div:,.0f} ===")

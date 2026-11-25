@@ -100,10 +100,10 @@ html_content = f'''<!DOCTYPE html>
     .btn-primary {{ background: #0284c7; border-color: #0284c7; color: #fff; }}
     .btn-primary:hover {{ background: #0369a1; }}
 
-    /* KPI Cards (3 精簡大卡片) */
+    /* KPI Cards (4 精準大卡片) */
     .kpi-grid {{
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 16px;
     }}
     .kpi-card {{
@@ -131,17 +131,40 @@ html_content = f'''<!DOCTYPE html>
       background: var(--card-border);
     }}
     .kpi-card.c-today::before {{ background: var(--tw-red-bold); }}
-    .kpi-card.c-blue::before {{ background: #0284c7; }}
+    .kpi-card.c-profit::before {{ background: var(--tw-red-bold); }}
+    .kpi-card.c-amber::before {{ background: var(--warning); }}
     .kpi-card.c-purple::before {{ background: #818cf8; }}
     
     .kpi-label {{ font-size: 14px; color: var(--text-muted); font-weight: 500; display: flex; justify-content: space-between; align-items: center; }}
-    .kpi-value {{ font-size: 28px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }}
+    .kpi-value {{ font-size: 26px; font-weight: 700; color: #fff; letter-spacing: -0.5px; }}
     .kpi-sub {{ font-size: 13px; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }}
     
     /* 台股色彩類別：紅獲利綠虧損 */
     .text-pos {{ color: var(--tw-red) !important; }}
     .text-neg {{ color: var(--tw-green) !important; }}
-    .highlight-gain {{ color: #f87171 !important; font-size: 28px; font-weight: 800; }}
+    .highlight-gain {{ color: #f87171 !important; font-size: 27px; font-weight: 800; }}
+
+    /* 歷史排名標籤 */
+    .rank-badge {{
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      line-height: 1.4;
+    }}
+    .rank-gain {{
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.4);
+    }}
+    .rank-loss {{
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }}
 
     /* ETF Grid */
     .etf-grid {{
@@ -307,6 +330,24 @@ html_content = f'''<!DOCTYPE html>
       top: 0;
       border-bottom: 1px solid var(--card-border);
       white-space: nowrap;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.15s, background 0.15s;
+    }}
+    thead th:hover {{
+      color: #fff;
+      background: #1e293b;
+    }}
+    thead th .sort-icon {{
+      font-size: 11px;
+      margin-left: 4px;
+      color: #64748b;
+    }}
+    thead th.sorted {{
+      color: var(--primary);
+    }}
+    thead th.sorted .sort-icon {{
+      color: var(--primary);
     }}
     tbody tr {{ border-bottom: 1px solid rgba(51, 65, 85, 0.5); transition: background 0.15s; }}
     tbody tr:hover {{ background: rgba(51, 65, 85, 0.4); }}
@@ -317,23 +358,14 @@ html_content = f'''<!DOCTYPE html>
     }}
     .th-left, .td-left {{ text-align: left; }}
 
-    /* Monthly Dividends Matrix */
-    .matrix-grid {{
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 12px;
+    /* List Table for Monthly Dividends */
+    .monthly-table thead th {{
+      cursor: default;
     }}
-    .matrix-card {{
+    .monthly-table thead th:hover {{
+      color: var(--text-muted);
       background: #0f172a;
-      border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
     }}
-    .matrix-ym {{ font-weight: 700; color: var(--primary); font-size: 14px; display: flex; justify-content: space-between; }}
-    .matrix-total {{ font-size: 15px; font-weight: 700; color: #fff; }}
 
     .footer {{
       text-align: center;
@@ -349,7 +381,7 @@ html_content = f'''<!DOCTYPE html>
     <div class="header">
       <div class="header-title">
         <h1>📊 存股每日資產與獲利變化追蹤儀表板</h1>
-        <p>追蹤區間：<span id="range-label">2024-09-02 至 2026-11-24</span> · 共 541 個交易日 · 台股色彩慣例：<span style="color:var(--tw-red);font-weight:700;">紅賺</span> / <span style="color:var(--tw-green);font-weight:700;">綠賠</span></p>
+        <p>追蹤區間：<span id="range-label">2024-09-02 至 2026-11-25</span> · 共 541 個交易日 · 台股色彩慣例：<span style="color:var(--tw-red);font-weight:700;">紅賺</span> / <span style="color:var(--tw-green);font-weight:700;">綠賠</span></p>
       </div>
       <div class="header-actions">
         <span class="badge badge-live" id="live-badge"><span class="pulse-dot"></span> 雲端連線中 · 每5分鐘自動同步</span>
@@ -358,13 +390,13 @@ html_content = f'''<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- KPI Summary Grid (依照指示精簡為 3 張核心看板) -->
+    <!-- KPI Summary Grid (4 大核心看板) -->
     <div class="kpi-grid">
-      <!-- 1. 今日獲利 (單日損益) + 下方小字：前日獲利變化 -->
+      <!-- 1. 今日獲利 (單日損益) + 下方小字：前日獲利變化 & 歷史排名 -->
       <div class="kpi-card c-today" onclick="setMode('daily_change')">
         <div class="kpi-label">
           <span>今日獲利 (單日損益)</span>
-          <span>⚡ 今日變化</span>
+          <span class="rank-badge rank-gain" id="today-rank-badge">🏆 獲利第 1 名</span>
         </div>
         <div class="kpi-value highlight-gain" id="kpi-today-profit">+NT$ 1,997,171</div>
         <div class="kpi-sub" id="kpi-today-sub">
@@ -373,19 +405,32 @@ html_content = f'''<!DOCTYPE html>
         </div>
       </div>
 
-      <!-- 2. 持股總市值 + 下方小字：持股獲利 (未實現損益) 與 獲利% -->
-      <div class="kpi-card c-blue" onclick="setMode('profit')">
+      <!-- 2. 持股獲利 (主要大字顯示獲利金額與%，下方小字為持股總市值) -->
+      <div class="kpi-card c-profit" onclick="setMode('profit')">
         <div class="kpi-label">
-          <span>持股總市值</span>
-          <span>📈 點選看獲利曲線</span>
+          <span>持股獲利 (未實現損益)</span>
+          <span>🎯 點選看走勢</span>
         </div>
-        <div class="kpi-value" id="kpi-stock-val">NT$ 23,244,000</div>
-        <div class="kpi-sub text-pos" id="kpi-stock-sub">
-          <span>持股獲利 +NT$ 9,176,641 (+65.24%)</span>
+        <div class="kpi-value text-pos" id="kpi-profit-main">+NT$ 7,655,223 (+54.42%)</div>
+        <div class="kpi-sub" id="kpi-stock-sub">
+          <span style="color:var(--text-muted);">持股總市值：</span>
+          <span style="font-weight:600; color:var(--primary);" id="kpi-stock-val">NT$ 21,722,560</span>
         </div>
       </div>
 
-      <!-- 3. 淨總資產 (試算表資產總值) -->
+      <!-- 3. 近 3 個月平均領息金額 -->
+      <div class="kpi-card c-amber" onclick="scrollToMonthly()">
+        <div class="kpi-label">
+          <span>近 3 次平均月領息</span>
+          <span>💵 穩定現金流</span>
+        </div>
+        <div class="kpi-value text-pos" id="kpi-3m-div">NT$ 295,253</div>
+        <div class="kpi-sub" style="color:var(--text-muted);" id="kpi-3m-sub">
+          <span>近 3 個月 (9、10、11月) 平均每月領息</span>
+        </div>
+      </div>
+
+      <!-- 4. 淨總資產 (試算表資產總值) -->
       <div class="kpi-card c-purple" onclick="setMode('net_asset')">
         <div class="kpi-label">
           <span>淨總資產</span>
@@ -398,7 +443,7 @@ html_content = f'''<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- ETF Position Status -->
+    <!-- ETF Position Status (含今日漲跌金額與%數) -->
     <div class="etf-grid">
       <div class="etf-card">
         <div class="etf-header">
@@ -406,7 +451,7 @@ html_content = f'''<!DOCTYPE html>
             <div class="etf-code">00919 群益台灣精選高息</div>
             <div class="etf-name">佔比第一大核心持股</div>
           </div>
-          <span class="etf-badge b-919" id="badge-919">40.6%</span>
+          <span class="etf-badge b-919" id="badge-919">41.2%</span>
         </div>
         <div class="etf-metrics">
           <div class="etf-metric-item">
@@ -414,12 +459,15 @@ html_content = f'''<!DOCTYPE html>
             <span class="etf-metric-val" id="shares-919">320.000 張</span>
           </div>
           <div class="etf-metric-item">
-            <span class="etf-metric-label">最新收盤價</span>
-            <span class="etf-metric-val" id="price-919">29.50 元</span>
+            <span class="etf-metric-label">最新股價 (今日漲跌)</span>
+            <span class="etf-metric-val" id="price-box-919">
+              <span id="price-919">27.95 元</span>
+              <span id="chg-919" class="text-pos" style="font-size:11px; margin-left:4px;">▲ +0.08 (+0.29%)</span>
+            </span>
           </div>
           <div class="etf-metric-item">
             <span class="etf-metric-label">當前市值</span>
-            <span class="etf-metric-val" id="val-919">NT$ 9,440,000</span>
+            <span class="etf-metric-val" id="val-919">NT$ 8,944,000</span>
           </div>
           <div class="etf-metric-item">
             <span class="etf-metric-label">平均成本 / 獲利</span>
@@ -434,7 +482,7 @@ html_content = f'''<!DOCTYPE html>
             <div class="etf-code">0056 元大高股息</div>
             <div class="etf-name">穩健長青老牌高股息</div>
           </div>
-          <span class="etf-badge b-56" id="badge-56">24.1%</span>
+          <span class="etf-badge b-56" id="badge-56">23.7%</span>
         </div>
         <div class="etf-metrics">
           <div class="etf-metric-item">
@@ -442,12 +490,15 @@ html_content = f'''<!DOCTYPE html>
             <span class="etf-metric-val" id="shares-56">112.000 張</span>
           </div>
           <div class="etf-metric-item">
-            <span class="etf-metric-label">最新收盤價</span>
-            <span class="etf-metric-val" id="price-56">49.94 元</span>
+            <span class="etf-metric-label">最新股價 (今日漲跌)</span>
+            <span class="etf-metric-val" id="price-box-56">
+              <span id="price-56">45.90 元</span>
+              <span id="chg-56" class="text-pos" style="font-size:11px; margin-left:4px;">▲ +0.18 (+0.39%)</span>
+            </span>
           </div>
           <div class="etf-metric-item">
             <span class="etf-metric-label">當前市值</span>
-            <span class="etf-metric-val" id="val-56">NT$ 5,593,280</span>
+            <span class="etf-metric-val" id="val-56">NT$ 5,140,800</span>
           </div>
           <div class="etf-metric-item">
             <span class="etf-metric-label">平均成本 / 獲利</span>
@@ -462,7 +513,7 @@ html_content = f'''<!DOCTYPE html>
             <div class="etf-code">00929 復華台灣科技優息</div>
             <div class="etf-name">科技月配息主力</div>
           </div>
-          <span class="etf-badge b-929" id="badge-929">20.5%</span>
+          <span class="etf-badge b-929" id="badge-929">20.3%</span>
         </div>
         <div class="etf-metrics">
           <div class="etf-metric-item">
@@ -470,12 +521,15 @@ html_content = f'''<!DOCTYPE html>
             <span class="etf-metric-val" id="shares-929">200.000 張</span>
           </div>
           <div class="etf-metric-item">
-            <span class="etf-metric-label">最新收盤價</span>
-            <span class="etf-metric-val" id="price-929">23.80 元</span>
+            <span class="etf-metric-label">最新股價 (今日漲跌)</span>
+            <span class="etf-metric-val" id="price-box-929">
+              <span id="price-929">22.10 元</span>
+              <span id="chg-929" class="text-pos" style="font-size:11px; margin-left:4px;">▲ +0.05 (+0.23%)</span>
+            </span>
           </div>
           <div class="etf-metric-item">
             <span class="etf-metric-label">當前市值</span>
-            <span class="etf-metric-val" id="val-929">NT$ 4,760,000</span>
+            <span class="etf-metric-val" id="val-929">NT$ 4,420,000</span>
           </div>
           <div class="etf-metric-item">
             <span class="etf-metric-label">平均成本 / 獲利</span>
@@ -498,12 +552,15 @@ html_content = f'''<!DOCTYPE html>
             <span class="etf-metric-val" id="shares-878">112.000 張</span>
           </div>
           <div class="etf-metric-item">
-            <span class="etf-metric-label">最新收盤價</span>
-            <span class="etf-metric-val" id="price-878">30.81 元</span>
+            <span class="etf-metric-label">最新股價 (今日漲跌)</span>
+            <span class="etf-metric-val" id="price-box-878">
+              <span id="price-878">28.73 元</span>
+              <span id="chg-878" class="text-pos" style="font-size:11px; margin-left:4px;">▲ +0.10 (+0.35%)</span>
+            </span>
           </div>
           <div class="etf-metric-item">
             <span class="etf-metric-label">當前市值</span>
-            <span class="etf-metric-val" id="val-878">NT$ 3,450,720</span>
+            <span class="etf-metric-val" id="val-878">NT$ 3,217,760</span>
           </div>
           <div class="etf-metric-item">
             <span class="etf-metric-label">平均成本 / 獲利</span>
@@ -542,31 +599,35 @@ html_content = f'''<!DOCTYPE html>
       </div>
     </div>
 
-    <!-- Daily Historical Table -->
+    <!-- Daily Historical Table (支援點選表頭排序 & 歷史排名顯示) -->
     <div class="table-section">
       <div class="table-header">
         <div>
           <h2>📅 每日持股明細歷史紀錄</h2>
-          <p style="color:var(--text-muted);font-size:13px;margin-top:4px;">可搜尋指定日期或排序查看每日市值、持股獲利、損益率與每檔 ETF 收盤價（紅賺綠賠）</p>
+          <p style="color:var(--text-muted);font-size:13px;margin-top:4px;">點選任何「欄位表頭」即可自訂由大到小或由小到大排序；重新整理自動還原依最新日期排序</p>
         </div>
-        <input type="text" id="searchInput" class="search-input" placeholder="🔍 搜尋日期 (例如: 2026-11 或 2025-05)" oninput="filterTable()">
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="btn" onclick="resetSort()">🔄 還原日期排序</button>
+          <input type="text" id="searchInput" class="search-input" placeholder="🔍 搜尋日期 (例如: 2026-11 或 2025-05)" oninput="filterTable()">
+        </div>
       </div>
 
       <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th class="th-left">日期</th>
-              <th>持股總市值 (NT$)</th>
-              <th style="color:var(--tw-red);">持股獲利 (NT$)</th>
-              <th style="color:var(--tw-red);">獲利變化%</th>
-              <th style="color:var(--tw-red);">當日增減 (今日獲利 NT$)</th>
-              <th style="color:var(--tw-red);">含息總獲利 (NT$)</th>
-              <th>累計已領息 (NT$)</th>
-              <th style="color:var(--c-919);">00919 (張/價/值)</th>
-              <th style="color:var(--c-56);">0056 (張/價/值)</th>
-              <th style="color:var(--c-929);">00929 (張/價/值)</th>
-              <th style="color:var(--c-878);">00878 (張/價/值)</th>
+              <th class="th-left sorted" id="th-date" onclick="sortTable('date')">日期 <span class="sort-icon" id="icon-date">▼</span></th>
+              <th id="th-rank_num" onclick="sortTable('rank_num')">歷史漲跌排名 <span class="sort-icon" id="icon-rank_num">↕</span></th>
+              <th id="th-daily_change" onclick="sortTable('daily_change')">當日增減 (今日獲利 NT$) <span class="sort-icon" id="icon-daily_change">↕</span></th>
+              <th id="th-profit" onclick="sortTable('profit')" style="color:var(--tw-red);">持股獲利 (NT$) <span class="sort-icon" id="icon-profit">↕</span></th>
+              <th id="th-profit_pct" onclick="sortTable('profit_pct')" style="color:var(--tw-red);">獲利變化% <span class="sort-icon" id="icon-profit_pct">↕</span></th>
+              <th id="th-stock_val" onclick="sortTable('stock_val')">持股總市值 (NT$) <span class="sort-icon" id="icon-stock_val">↕</span></th>
+              <th id="th-profit_with_div" onclick="sortTable('profit_with_div')" style="color:var(--tw-red);">含息總獲利 (NT$) <span class="sort-icon" id="icon-profit_with_div">↕</span></th>
+              <th id="th-cum_div" onclick="sortTable('cum_div')">累計已領息 (NT$) <span class="sort-icon" id="icon-cum_div">↕</span></th>
+              <th id="th-val919" onclick="sortTable('val919')" style="color:var(--c-919);">00919 (張/價/值) <span class="sort-icon" id="icon-val919">↕</span></th>
+              <th id="th-val56" onclick="sortTable('val56')" style="color:var(--c-56);">0056 (張/價/值) <span class="sort-icon" id="icon-val56">↕</span></th>
+              <th id="th-val929" onclick="sortTable('val929')" style="color:var(--c-929);">00929 (張/價/值) <span class="sort-icon" id="icon-val929">↕</span></th>
+              <th id="th-val878" onclick="sortTable('val878')" style="color:var(--c-878);">00878 (張/價/值) <span class="sort-icon" id="icon-val878">↕</span></th>
             </tr>
           </thead>
           <tbody id="tableBody">
@@ -576,23 +637,39 @@ html_content = f'''<!DOCTYPE html>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; color:var(--text-muted); font-size:12px;">
         <span id="tableCount">顯示 0 / 0 筆</span>
-        <span>提示：點選「匯出每日 CSV」可下載完整 541 天含獲利明細試算表</span>
+        <span>提示：點擊任一欄位表頭可自訂升降冪排序</span>
       </div>
     </div>
 
-    <!-- Monthly Dividends Breakdown Section -->
-    <div class="table-section">
+    <!-- Monthly Dividends List Section (最新在最上面列表呈現) -->
+    <div class="table-section" id="monthly-section">
       <div class="table-header">
         <div>
-          <h2>💵 歷月領息與被動現金流紀錄</h2>
-          <p style="color:var(--text-muted);font-size:13px;margin-top:4px;">統計 2024/09 ~ 2026/11 各月份實際入帳股息與各檔 ETF 配發狀況</p>
+          <h2>💵 歷月領息與被動現金流紀錄 (依月份最新排序)</h2>
+          <p style="color:var(--text-muted);font-size:13px;margin-top:4px;">最新月份領息在最上方 · 統計各月份實際入帳股息、每檔 ETF 配發單價與領取金額</p>
         </div>
-        <div style="font-size:14px; font-weight:600; color:var(--tw-red);">
+        <div style="font-size:14px; font-weight:700; color:var(--tw-red);">
           累計總入帳股息：NT$ 4,483,866 元
         </div>
       </div>
-      <div class="matrix-grid" id="matrixGrid">
-        <!-- Dynamic monthly cards -->
+      
+      <div class="table-container">
+        <table class="monthly-table">
+          <thead>
+            <tr>
+              <th class="th-left">領息月份</th>
+              <th style="color:var(--tw-red);">當月總股息 (NT$)</th>
+              <th style="color:var(--c-919);">00919 配息明細</th>
+              <th style="color:var(--c-56);">0056 配息明細</th>
+              <th style="color:var(--c-929);">00929 配息明細</th>
+              <th style="color:var(--c-878);">00878 配息明細</th>
+              <th>當期累計已領股息 (NT$)</th>
+            </tr>
+          </thead>
+          <tbody id="monthlyTableBody">
+            <!-- Dynamic monthly rows -->
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -605,14 +682,23 @@ html_content = f'''<!DOCTYPE html>
     const PORTFOLIO_DATA = {json_str};
     let allRecords = PORTFOLIO_DATA.daily_data;
     const monthlyRecords = PORTFOLIO_DATA.monthly_records;
-    const COST_PRINCIPAL = 14066887.0;
+    const summary = PORTFOLIO_DATA.summary || {{}};
+    const COST_PRINCIPAL = summary.cost || 14066887.0;
     
     let currentMode = 'profit';
     let currentRange = 'all';
     let filteredRecords = [...allRecords];
+    
+    // Table sorting state
+    let sortKey = 'date';
+    let sortAsc = false; // default date descending
 
     function fmt(n) {{
-      return Math.round(n).toLocaleString('en-US');
+      return Math.round(n || 0).toLocaleString('en-US');
+    }}
+
+    function scrollToMonthly() {{
+      document.getElementById('monthly-section').scrollIntoView({{ behavior: 'smooth' }});
     }}
 
     function setMode(mode) {{
@@ -791,7 +877,7 @@ html_content = f'''<!DOCTYPE html>
         ctx.fillText(r.date.substring(5), xPos, H - 12);
       }}
 
-      // Plot series (紅漲綠跌：正紅負綠)
+      // Plot series (紅漲綠跌)
       if (currentMode === 'daily_change') {{
         const barW = Math.max(2, (plotW / filteredRecords.length) * 0.7);
         const zeroY = padTop + plotH - (plotH * (-minY / (maxY - minY)));
@@ -843,7 +929,7 @@ html_content = f'''<!DOCTYPE html>
       }} else {{
         let mainColor = '#38bdf8';
         if (currentMode === 'profit') mainColor = '#f87171'; // 台股紅
-        if (currentMode === 'profit_with_div') mainColor = '#ef4444'; // 深紅
+        if (currentMode === 'profit_with_div') mainColor = '#ef4444';
         if (currentMode === 'stock_val_with_div') mainColor = '#38bdf8';
         if (currentMode === 'net_asset') mainColor = '#818cf8';
 
@@ -872,7 +958,7 @@ html_content = f'''<!DOCTYPE html>
       }}
     }}
 
-    // Mouse Move Tooltip Handler (台股紅賺綠賠)
+    // Mouse Move Tooltip Handler (含排名與漲跌)
     canvas.addEventListener('mousemove', (e) => {{
       const rect = canvas.getBoundingClientRect();
       const mouseX = e.clientX - rect.left;
@@ -894,15 +980,22 @@ html_content = f'''<!DOCTYPE html>
         const r = closest.r;
         tooltip.style.display = 'block';
         tooltip.style.left = Math.min(rect.width - 260, Math.max(10, closest.x + 15)) + 'px';
-        tooltip.style.top = Math.max(10, Math.min(rect.height - 220, closest.y - 50)) + 'px';
+        tooltip.style.top = Math.max(10, Math.min(rect.height - 230, closest.y - 50)) + 'px';
 
         const changeClass = r.daily_change >= 0 ? 'text-pos' : 'text-neg';
         const changeSign = r.daily_change >= 0 ? '+' : '';
         const profitClass = r.profit >= 0 ? 'text-pos' : 'text-neg';
         const profitSign = r.profit >= 0 ? '+' : '';
 
+        const rankBadge = r.rank_type === 'gain' 
+          ? `<span class="rank-badge rank-gain">🏆 ${{r.rank_text}}</span>`
+          : (r.rank_type === 'loss' ? `<span class="rank-badge rank-loss">⚠️ ${{r.rank_text}}</span>` : '');
+
         tooltip.innerHTML = `
-          <div class="tt-date">📅 ${{r.date}}</div>
+          <div class="tt-date" style="display:flex; justify-content:space-between; align-items:center;">
+            <span>📅 ${{r.date}}</span>
+            ${{rankBadge}}
+          </div>
           <div class="tt-row">
             <span class="tt-label">⚡ 今日獲利(增減):</span>
             <span class="tt-val ${{changeClass}}">${{changeSign}}NT$ ${{fmt(r.daily_change)}} (${{changeSign}}${{r.daily_change_pct}}%)</span>
@@ -943,25 +1036,92 @@ html_content = f'''<!DOCTYPE html>
       drawChart();
     }});
 
-    // Populate Table (紅漲綠跌)
+    // Table Sorting Functionality
+    function sortTable(key) {{
+      if (sortKey === key) {{
+        sortAsc = !sortAsc;
+      }} else {{
+        sortKey = key;
+        sortAsc = (key === 'date') ? false : false; // default desc for numbers
+      }}
+
+      // Update Header Icons
+      document.querySelectorAll('thead th').forEach(th => {{
+        th.classList.remove('sorted');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.innerText = '↕';
+      }});
+
+      const currTh = document.getElementById('th-' + key);
+      const currIcon = document.getElementById('icon-' + key);
+      if (currTh) currTh.classList.add('sorted');
+      if (currIcon) currIcon.innerText = sortAsc ? '▲' : '▼';
+
+      applySortAndRender();
+    }}
+
+    function resetSort() {{
+      sortKey = 'date';
+      sortAsc = false;
+      document.querySelectorAll('thead th').forEach(th => {{
+        th.classList.remove('sorted');
+        const icon = th.querySelector('.sort-icon');
+        if (icon) icon.innerText = '↕';
+      }});
+      const thDate = document.getElementById('th-date');
+      const iconDate = document.getElementById('icon-date');
+      if (thDate) thDate.classList.add('sorted');
+      if (iconDate) iconDate.innerText = '▼';
+
+      document.getElementById('searchInput').value = '';
+      applySortAndRender();
+    }}
+
+    function applySortAndRender() {{
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      let records = q ? allRecords.filter(r => r.date.toLowerCase().includes(q)) : [...allRecords];
+
+      records.sort((a, b) => {{
+        let vA = a[sortKey];
+        let vB = b[sortKey];
+        if (sortKey === 'rank_num') {{
+          // Special sort for rank: gains first (1..N), then even, then losses (1..N)
+          vA = a.daily_change;
+          vB = b.daily_change;
+        }}
+        if (typeof vA === 'string') {{
+          return sortAsc ? vA.localeCompare(vB) : vB.localeCompare(vA);
+        }} else {{
+          return sortAsc ? (vA - vB) : (vB - vA);
+        }}
+      }});
+
+      renderTable(records);
+    }}
+
+    // Populate Daily Historical Table (含歷史漲跌排名)
     function renderTable(records) {{
       const tb = document.getElementById('tableBody');
       tb.innerHTML = '';
-      
-      const reversed = [...records].reverse();
-      reversed.forEach(r => {{
+
+      records.forEach(r => {{
         const tr = document.createElement('tr');
         const changeClass = r.daily_change >= 0 ? 'text-pos' : 'text-neg';
         const changeSign = r.daily_change >= 0 ? '+' : '';
         const profitClass = r.profit >= 0 ? 'text-pos' : 'text-neg';
         const profitSign = r.profit >= 0 ? '+' : '';
 
+        const rankBadge = r.rank_type === 'gain' 
+          ? `<span class="rank-badge rank-gain">🏆 ${{r.rank_text}}</span>`
+          : (r.rank_type === 'loss' ? `<span class="rank-badge rank-loss">⚠️ ${{r.rank_text}}</span>` : `<span style="color:var(--text-muted);">-</span>`);
+
         tr.innerHTML = `
           <td class="td-left" style="font-weight:600;">${{r.date}}</td>
-          <td style="font-weight:700; color:var(--primary);">NT$ ${{fmt(r.stock_val)}}</td>
+          <td style="text-align:center;">${{rankBadge}}</td>
+          <td class="${{changeClass}}" style="font-weight:700;">${{changeSign}}NT$ ${{fmt(r.daily_change)}}</td>
           <td class="${{profitClass}}" style="font-weight:700;">${{profitSign}}NT$ ${{fmt(r.profit)}}</td>
           <td class="${{profitClass}}">${{profitSign}}${{r.profit_pct}}%</td>
-          <td class="${{changeClass}}" style="font-weight:600;">${{changeSign}}NT$ ${{fmt(r.daily_change)}}</td>
+          <td style="font-weight:600; color:var(--primary);">NT$ ${{fmt(r.stock_val)}}</td>
           <td class="text-pos" style="font-weight:600;">+NT$ ${{fmt(r.profit_with_div)}}</td>
           <td style="color:var(--primary);">${{fmt(r.cum_div)}}</td>
           <td style="color:var(--c-919);">${{r.s919}}張 / ${{r.p919}} / NT$ ${{fmt(r.val919)}}</td>
@@ -976,45 +1136,47 @@ html_content = f'''<!DOCTYPE html>
     }}
 
     function filterTable() {{
-      const q = document.getElementById('searchInput').value.trim().toLowerCase();
-      if (!q) {{
-        renderTable(allRecords);
-      }} else {{
-        const filtered = allRecords.filter(r => r.date.toLowerCase().includes(q));
-        renderTable(filtered);
-      }}
+      applySortAndRender();
     }}
 
-    // Populate Monthly Dividend Matrix
-    function renderMonthlyGrid() {{
-      const grid = document.getElementById('matrixGrid');
-      grid.innerHTML = '';
+    // Populate Monthly Dividend Table (列表方式，最新在最上方)
+    function renderMonthlyTable() {{
+      const tb = document.getElementById('monthlyTableBody');
+      tb.innerHTML = '';
 
-      monthlyRecords.forEach(m => {{
-        const card = document.createElement('div');
-        card.className = 'matrix-card';
-        card.innerHTML = `
-          <div class="matrix-ym">
-            <span>${{m.ym}}</span>
-            <span style="font-size:11px; color:var(--text-muted);">領息月</span>
-          </div>
-          <div class="matrix-total text-pos">+NT$ ${{fmt(m.total_div)}}</div>
-          <div style="font-size:11px; color:var(--text-muted); display:flex; flex-direction:column; gap:2px; margin-top:4px;">
-            <span>00919: ${{m['00919_div'] ? m['00919_div'] + '元' : '-'}} (${{m['00919_shares']}}張)</span>
-            <span>0056: ${{m['0056_div'] ? m['0056_div'] + '元' : '-'}} (${{m['0056_shares']}}張)</span>
-            <span>00929: ${{m['00929_div'] ? m['00929_div'] + '元' : '-'}} (${{m['00929_shares']}}張)</span>
-            <span>00878: ${{m['00878_div'] ? m['00878_div'] + '元' : '-'}} (${{m['00878_shares']}}張)</span>
-          </div>
+      // Sort descending by ym (最新在最上面)
+      const sortedM = [...monthlyRecords].sort((a, b) => b.ym.localeCompare(a.ym));
+      
+      // Compute running cumulative dividends backwards
+      let runningCum = summary.dividend_up_to_now || 4483866;
+      
+      sortedM.forEach(m => {{
+        const tr = document.createElement('tr');
+        
+        const d919 = m['00919_div'] ? `${{m['00919_div']}}元 (${{m['00919_shares']}}張 = NT$ ${{fmt(m['00919_div']*m['00919_shares']*1000)}})` : '-';
+        const d56  = m['0056_div']  ? `${{m['0056_div']}}元 (${{m['0056_shares']}}張 = NT$ ${{fmt(m['0056_div']*m['0056_shares']*1000)}})` : '-';
+        const d929 = m['00929_div'] ? `${{m['00929_div']}}元 (${{m['00929_shares']}}張 = NT$ ${{fmt(m['00929_div']*m['00929_shares']*1000)}})` : '-';
+        const d878 = m['00878_div'] ? `${{m['00878_div']}}元 (${{m['00878_shares']}}張 = NT$ ${{fmt(m['00878_div']*m['00878_shares']*1000)}})` : '-';
+
+        tr.innerHTML = `
+          <td class="td-left" style="font-weight:700; color:var(--primary); font-size:14px;">${{m.ym}}</td>
+          <td class="text-pos" style="font-weight:800; font-size:14px;">+NT$ ${{fmt(m.total_div)}}</td>
+          <td style="color:var(--c-919);">${{d919}}</td>
+          <td style="color:var(--c-56);">${{d56}}</td>
+          <td style="color:var(--c-929);">${{d929}}</td>
+          <td style="color:var(--c-878);">${{d878}}</td>
+          <td style="font-weight:600; color:var(--text);">${{fmt(runningCum)}}</td>
         `;
-        grid.appendChild(card);
+        tb.appendChild(tr);
+        runningCum -= m.total_div;
       }});
     }}
 
-    // Export CSV
+    // Export CSV (含排名)
     function exportCSV() {{
-      let csv = '日期,持股總市值,持股獲利(NT$),獲利率(%),當日市值增減(今日獲利),含息總獲利(NT$),累計股息,含息總價值,淨總資產,00919張數,00919價格,00919市值,0056張數,0056價格,0056市值,00929張數,00929價格,00929市值,00878張數,00878價格,00878市值\\n';
+      let csv = '日期,歷史漲跌排名,持股獲利(NT$),獲利率(%),當日市值增減(今日獲利),持股總市值,含息總獲利(NT$),累計股息,含息總價值,淨總資產,00919張數,00919價格,00919市值,0056張數,0056價格,0056市值,00929張數,00929價格,00929市值,00878張數,00878價格,00878市值\\n';
       allRecords.forEach(r => {{
-        csv += `${{r.date}},${{r.stock_val}},${{r.profit}},${{r.profit_pct}},${{r.daily_change}},${{r.profit_with_div}},${{r.cum_div}},${{r.stock_val_with_div}},${{r.net_asset}},${{r.s919}},${{r.p919}},${{r.val919}},${{r.s56}},${{r.p56}},${{r.val56}},${{r.s929}},${{r.p929}},${{r.val929}},${{r.s878}},${{r.p878}},${{r.val878}}\\n`;
+        csv += `${{r.date}},"${{r.rank_text}}",${{r.profit}},${{r.profit_pct}},${{r.daily_change}},${{r.stock_val}},${{r.profit_with_div}},${{r.cum_div}},${{r.stock_val_with_div}},${{r.net_asset}},${{r.s919}},${{r.p919}},${{r.val919}},${{r.s56}},${{r.p56}},${{r.val56}},${{r.s929}},${{r.p929}},${{r.val929}},${{r.s878}},${{r.p878}},${{r.val878}}\\n`;
       }});
       const blob = new Blob([csv], {{ type: 'text/csv;charset=utf-8;' }});
       const url = URL.createObjectURL(blob);
@@ -1030,7 +1192,6 @@ html_content = f'''<!DOCTYPE html>
     window.handleGoogleSheetLiveResponse = function(response) {{
       try {{
         const rows = response.table.rows;
-        // Parse Row 1 & Row 3
         const liveCost = rows[1]?.c[1]?.v || COST_PRINCIPAL;
         const liveStockVal = rows[1]?.c[2]?.v;
         const liveProfit = rows[1]?.c[3]?.v;
@@ -1039,11 +1200,11 @@ html_content = f'''<!DOCTYPE html>
         const liveNetAsset = rows[1]?.c[12]?.v;
         const liveTodayProfit = rows[3]?.c[11]?.v;
 
-        // Parse ETF rows (Row 4: 00929, Row 5: 00919, Row 6: 00878, Row 7: 0056)
-        const p929 = rows[4]?.c[1]?.v, s929 = rows[4]?.c[3]?.v, val929 = rows[4]?.c[4]?.v;
-        const p919 = rows[5]?.c[1]?.v, s919 = rows[5]?.c[3]?.v, val919 = rows[5]?.c[4]?.v;
-        const p878 = rows[6]?.c[1]?.v, s878 = rows[6]?.c[3]?.v, val878 = rows[6]?.c[4]?.v;
-        const p56  = rows[7]?.c[1]?.v, s56  = rows[7]?.c[3]?.v, val56  = rows[7]?.c[4]?.v;
+        // ETF live prices & changes
+        const p929 = rows[4]?.c[1]?.v, s929 = rows[4]?.c[3]?.v, val929 = rows[4]?.c[4]?.v, chg929 = rows[4]?.c[9]?.v;
+        const p919 = rows[5]?.c[1]?.v, s919 = rows[5]?.c[3]?.v, val919 = rows[5]?.c[4]?.v, chg919 = rows[5]?.c[9]?.v;
+        const p878 = rows[6]?.c[1]?.v, s878 = rows[6]?.c[3]?.v, val878 = rows[6]?.c[4]?.v, chg878 = rows[6]?.c[9]?.v;
+        const p56  = rows[7]?.c[1]?.v, s56  = rows[7]?.c[3]?.v, val56  = rows[7]?.c[4]?.v, chg56  = rows[7]?.c[9]?.v;
 
         if (liveStockVal && liveProfit !== undefined) {{
           // 1. Update Today Profit & Prev Profit subtext
@@ -1063,14 +1224,17 @@ html_content = f'''<!DOCTYPE html>
             }}
           }}
 
-          // 2. Update Stock Value & Subtext (持股獲利 + 獲利率)
-          const stockValEl = document.getElementById('kpi-stock-val');
-          if (stockValEl) stockValEl.innerText = 'NT$ ' + fmt(liveStockVal);
-
-          const stockSubEl = document.getElementById('kpi-stock-sub');
-          if (stockSubEl) {{
+          // 2. Update Card 2: Main text = 持股獲利, subtext = 持股總市值
+          const profitMainEl = document.getElementById('kpi-profit-main');
+          if (profitMainEl) {{
             const sign = liveProfit >= 0 ? '+' : '-';
-            stockSubEl.innerHTML = `<span class="${{liveProfit >= 0 ? 'text-pos' : 'text-neg'}}">持股獲利 ${{sign}}NT$ ${{fmt(Math.abs(liveProfit))}} (${{sign}}${{liveProfitPct.toFixed(2)}}%)</span>`;
+            profitMainEl.innerText = `${{sign}}NT$ ${{fmt(Math.abs(liveProfit))}} (${{sign}}${{liveProfitPct.toFixed(2)}}%)`;
+            profitMainEl.className = 'kpi-value ' + (liveProfit >= 0 ? 'text-pos' : 'text-neg');
+          }}
+
+          const stockValEl = document.getElementById('kpi-stock-val');
+          if (stockValEl) {{
+            stockValEl.innerText = 'NT$ ' + fmt(liveStockVal);
           }}
 
           // 3. Update Net Assets
@@ -1078,49 +1242,46 @@ html_content = f'''<!DOCTYPE html>
             const netEl = document.getElementById('kpi-net-asset');
             if (netEl) netEl.innerText = 'NT$ ' + fmt(liveNetAsset);
           }}
-          
-          const lastR = allRecords[allRecords.length - 1];
-          const cumDiv = lastR ? lastR.cum_div : 4483866;
-          const liveProfitWithDiv = liveProfit + cumDiv;
-          const liveProfitWithDivPct = ((liveProfitWithDiv / liveCost) * 100).toFixed(2);
 
-          // Update ETF cards
-          if (p919 && s919) {{
-            document.getElementById('price-919').innerText = p919 + ' 元';
-            document.getElementById('val-919').innerText = 'NT$ ' + fmt(val919);
-            document.getElementById('badge-919').innerText = ((val919 / liveStockVal) * 100).toFixed(1) + '%';
+          // Helper for rendering ETF price & change badge
+          function updateEtfCard(code, p, s, val, chg) {{
+            if (!p || !s) return;
+            const pEl = document.getElementById('price-' + code);
+            const valEl = document.getElementById('val-' + code);
+            const badgeEl = document.getElementById('badge-' + code);
+            const chgEl = document.getElementById('chg-' + code);
+
+            if (pEl) pEl.innerText = p + ' 元';
+            if (valEl) valEl.innerText = 'NT$ ' + fmt(val);
+            if (badgeEl) badgeEl.innerText = ((val / liveStockVal) * 100).toFixed(1) + '%';
+            
+            if (chgEl && chg !== undefined) {{
+              const numChg = parseFloat(chg);
+              const sign = numChg >= 0 ? '+' : '';
+              const prevP = p - numChg;
+              const pct = prevP > 0 ? ((numChg / prevP) * 100).toFixed(2) : '0.00';
+              const arrow = numChg > 0 ? '▲ ' : (numChg < 0 ? '▼ ' : '');
+              const cls = numChg >= 0 ? 'text-pos' : 'text-neg';
+              chgEl.className = cls;
+              chgEl.innerText = `${{arrow}}${{sign}}${{numChg}} (${{sign}}${{pct}}%)`;
+            }}
           }}
-          if (p56 && s56) {{
-            document.getElementById('price-56').innerText = p56 + ' 元';
-            document.getElementById('val-56').innerText = 'NT$ ' + fmt(val56);
-            document.getElementById('badge-56').innerText = ((val56 / liveStockVal) * 100).toFixed(1) + '%';
-          }}
-          if (p929 && s929) {{
-            document.getElementById('price-929').innerText = p929 + ' 元';
-            document.getElementById('val-929').innerText = 'NT$ ' + fmt(val929);
-            document.getElementById('badge-929').innerText = ((val929 / liveStockVal) * 100).toFixed(1) + '%';
-          }}
-          if (p878 && s878) {{
-            document.getElementById('price-878').innerText = p878 + ' 元';
-            document.getElementById('val-878').innerText = 'NT$ ' + fmt(val878);
-            document.getElementById('badge-878').innerText = ((val878 / liveStockVal) * 100).toFixed(1) + '%';
-          }}
+
+          updateEtfCard('919', p919, s919, val919, chg919);
+          updateEtfCard('56',  p56,  s56,  val56,  chg56);
+          updateEtfCard('929', p929, s929, val929, chg929);
+          updateEtfCard('878', p878, s878, val878, chg878);
 
           // Update latest record in array and redraw chart
+          const lastR = allRecords[allRecords.length - 1];
           if (lastR) {{
             lastR.stock_val = liveStockVal;
             lastR.profit = liveProfit;
             lastR.profit_pct = parseFloat(liveProfitPct.toFixed(2));
-            lastR.profit_with_div = liveProfitWithDiv;
-            lastR.profit_with_div_pct = parseFloat(liveProfitWithDivPct);
             if (liveTodayProfit !== undefined) lastR.daily_change = liveTodayProfit;
             if (liveNetAsset) lastR.net_asset = liveNetAsset;
-            if (p919) {{ lastR.p919 = p919; lastR.val919 = val919; }}
-            if (p56)  {{ lastR.p56 = p56; lastR.val56 = val56; }}
-            if (p929) {{ lastR.p929 = p929; lastR.val929 = val929; }}
-            if (p878) {{ lastR.p878 = p878; lastR.val878 = val878; }}
             drawChart();
-            renderTable(filteredRecords.length === allRecords.length ? allRecords : filteredRecords);
+            applySortAndRender();
           }}
 
           const now = new Date();
@@ -1147,10 +1308,10 @@ html_content = f'''<!DOCTYPE html>
       document.body.appendChild(script);
     }}
 
-    // Init
+    // Init Page
     drawChart();
-    renderTable(allRecords);
-    renderMonthlyGrid();
+    applySortAndRender();
+    renderMonthlyTable();
 
     // Trigger initial live sync and schedule every 5 minutes (300,000 ms)
     syncLiveSheet(false);
@@ -1166,4 +1327,4 @@ output_path = '/Users/10404604/.gemini/antigravity/scratch/stock-portfolio-track
 with open(output_path, 'w', encoding='utf-8') as f:
     f.write(html_content)
 
-print('Updated build_html.py with streamlined 3 KPI cards layout!')
+print('Generated index.html with all requested enhancements successfully!')
