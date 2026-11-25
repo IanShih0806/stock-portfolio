@@ -13173,8 +13173,8 @@
       "chg56": 0.76,
       "pct56": 2.01,
       "rank_type": "gain",
-      "rank_num": 20,
-      "rank_text": "獲利第 20 名"
+      "rank_num": 19,
+      "rank_text": "獲利第 19 名"
     },
     {
       "date": "2026-03-12",
@@ -13821,8 +13821,8 @@
       "chg56": 0.95,
       "pct56": 2.5,
       "rank_type": "gain",
-      "rank_num": 21,
-      "rank_text": "獲利第 21 名"
+      "rank_num": 20,
+      "rank_text": "獲利第 20 名"
     },
     {
       "date": "2026-04-09",
@@ -14433,8 +14433,8 @@
       "chg56": 1.02,
       "pct56": 2.49,
       "rank_type": "gain",
-      "rank_num": 19,
-      "rank_text": "獲利第 19 名"
+      "rank_num": 18,
+      "rank_text": "獲利第 18 名"
     },
     {
       "date": "2026-05-05",
@@ -14541,8 +14541,8 @@
       "chg56": 0.86,
       "pct56": 1.96,
       "rank_type": "gain",
-      "rank_num": 18,
-      "rank_text": "獲利第 18 名"
+      "rank_num": 17,
+      "rank_text": "獲利第 17 名"
     },
     {
       "date": "2026-05-08",
@@ -16233,8 +16233,8 @@
       "chg56": 1.25,
       "pct56": 2.42,
       "rank_type": "gain",
-      "rank_num": 22,
-      "rank_text": "獲利第 22 名"
+      "rank_num": 21,
+      "rank_text": "獲利第 21 名"
     },
     {
       "date": "2026-07-16",
@@ -16881,8 +16881,8 @@
       "chg56": 1.4,
       "pct56": 2.74,
       "rank_type": "gain",
-      "rank_num": 23,
-      "rank_text": "獲利第 23 名"
+      "rank_num": 22,
+      "rank_text": "獲利第 22 名"
     },
     {
       "date": "2026-08-11",
@@ -19442,39 +19442,39 @@
     },
     {
       "date": "2026-11-25",
-      "stock_val": 21719360.0,
-      "daily_change": 472560.0,
-      "daily_change_pct": 2.22,
-      "profit": 7652023.0,
-      "profit_pct": 54.4,
-      "profit_with_div": 12135889.0,
-      "profit_with_div_pct": 86.27,
+      "stock_val": 21671440.0,
+      "daily_change": 424640.0,
+      "daily_change_pct": 2.0,
+      "profit": 7604104.0,
+      "profit_pct": 54.06,
+      "profit_with_div": 12087970.0,
+      "profit_with_div_pct": 85.93,
       "cum_div": 4483866.0,
-      "stock_val_with_div": 26203226.0,
-      "net_asset": 21566161.0,
-      "p929": 22.1,
+      "stock_val_with_div": 26155306.0,
+      "net_asset": 21518241.0,
+      "p929": 22.07,
       "s929": 200.0,
-      "val929": 4420000.0,
-      "chg929": 0.39,
-      "pct929": 1.8,
-      "p919": 27.94,
+      "val929": 4414000.0,
+      "chg929": 0.36,
+      "pct929": 1.66,
+      "p919": 27.9,
       "s919": 320.0,
-      "val919": 8940800.0,
-      "chg919": 0.82,
-      "pct919": 3.02,
-      "p878": 28.73,
+      "val919": 8928000.0,
+      "chg919": 0.78,
+      "pct919": 2.88,
+      "p878": 28.65,
       "s878": 112.0,
-      "val878": 3217760.0,
-      "chg878": 0.68,
-      "pct878": 2.42,
-      "p56": 45.9,
+      "val878": 3208800.0,
+      "chg878": 0.6,
+      "pct878": 2.14,
+      "p56": 45.72,
       "s56": 112.0,
-      "val56": 5140800.0,
-      "chg56": 0.5,
-      "pct56": 1.1,
+      "val56": 5120640.0,
+      "chg56": 0.32,
+      "pct56": 0.7,
       "rank_type": "gain",
-      "rank_num": 17,
-      "rank_text": "獲利第 17 名"
+      "rank_num": 23,
+      "rank_text": "獲利第 23 名"
     }
   ],
   "monthly_records": [
@@ -19818,10 +19818,10 @@
       "2026-09"
     ],
     "latest_date": "2026-11-25",
-    "latest_stock_val": 21719360.0,
-    "latest_profit": 7652023.0,
-    "latest_profit_pct": 54.4,
-    "latest_rank_text": "獲利第 17 名",
+    "latest_stock_val": 21671440.0,
+    "latest_profit": 7604104.0,
+    "latest_profit_pct": 54.06,
+    "latest_rank_text": "獲利第 23 名",
     "latest_rank_type": "gain"
   }
 }
